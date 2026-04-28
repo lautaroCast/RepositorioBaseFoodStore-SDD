@@ -4,6 +4,25 @@ Sistema de e-commerce de productos alimenticios desarrollado con **Spec-Driven D
 
 ---
 
+## 🚀 Quick Start (Elige tu camino)
+
+### ¿Tenés Docker instalado y querés algo rápido?
+```bash
+git clone <url> food-store && cd food-store
+docker-compose up
+# Todo arranca en localhost (frontend: 80, backend: 8000)
+# ⏳ Espera a que diga "ready"
+# ✅ Listo. Abrí http://localhost
+```
+**Nota:** Docker está disponible desde **Change 06** (check en `docs/CHANGES.md`)
+
+### ¿Preferís setup manual (Python + Node local)?
+👉 Saltá a **[Setup del entorno de desarrollo](#setup-del-entorno-de-desarrollo)** más abajo.
+
+**Tiempo estimado:** 15-20 minutos | **Requisitos:** Python 3.11+, Node 18+, PostgreSQL 15+
+
+---
+
 ## Tabla de contenidos
 
 - [Documentación del sistema](#documentación-del-sistema)
@@ -118,62 +137,298 @@ frontend/
 
 ### Requisitos previos
 
-- Python 3.11+
-- Node.js 18+
-- PostgreSQL 15+
-- Git
-- (Opcional) OpenSpec CLI: `npm install -g @fission-ai/openspec`
+| Tecnología | Versión | Instalación |
+|------------|---------|------------|
+| **Git** | Cualquiera | https://git-scm.com/download |
+| **Python** | 3.11+ | https://www.python.org/downloads |
+| **Node.js** | 18+ | https://nodejs.org |
+| **PostgreSQL** | 15+ | https://www.postgresql.org/download |
+| **OpenSpec CLI** | Última | `npm install -g @fission-ai/openspec` (opcional) |
 
-### 1. Clonar e inicializar
+**Verificar instalaciones:**
+```bash
+git --version
+python --version
+node --version
+npm --version
+psql --version
+```
+
+---
+
+### PASO 1: Clonar el repositorio
 
 ```bash
 git clone <url-del-repo> food-store
 cd food-store
 ```
 
-### 2. Backend
+**¿Qué ves?**
+```
+food-store/
+├── backend/          ← Python + FastAPI
+├── frontend/         ← React + TypeScript
+├── docs/             ← Documentación
+├── openspec/         ← Cambios (SDD workflow)
+├── README.md
+└── CONTRIBUTING.md
+```
 
+---
+
+### PASO 2: Preparar PostgreSQL
+
+**Opción A: PostgreSQL ya corriendo localmente** (continuá a PASO 3)
+
+**Opción B: PostgreSQL con Docker** (si no lo tenés instalado)
+```bash
+docker run --name foodstore-postgres \
+  -e POSTGRES_USER=foodstore_user \
+  -e POSTGRES_PASSWORD=foodstore_password \
+  -e POSTGRES_DB=foodstore_db \
+  -p 5432:5432 \
+  -d postgres:15
+```
+
+---
+
+### PASO 3: Backend (FastAPI)
+
+#### 3.1 Entrar a la carpeta backend
 ```bash
 cd backend
+```
 
-# Copiar template de variables de entorno
+#### 3.2 Crear archivo `.env` (variables secretas)
+```bash
+# Linux / Mac
 cp .env.example .env
 
-# Crear virtual environment
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+**¿Qué hace?** Copia la plantilla. Ahora edita `.env` y asegúrate de que coincida con tu BD:
+```env
+DATABASE_URL=postgresql://foodstore_user:foodstore_password@localhost:5432/foodstore_db
+JWT_SECRET=my-super-secret-key-change-in-production
+JWT_EXPIRY_HOURS=24
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+LOG_LEVEL=info
+ENVIRONMENT=development
+```
+
+#### 3.3 Crear "virtual environment" (caja aislada para librerías Python)
+```bash
+# Crear
 python -m venv .venv
-source .venv/bin/activate      # Linux/Mac
-.venv\Scripts\activate         # Windows (PowerShell)
 
-# Instalar dependencias
+# Activar (depende de tu OS)
+# ========== WINDOWS (PowerShell) ==========
+.venv\Scripts\activate
+
+# ========== LINUX / Mac ==========
+source .venv/bin/activate
+```
+
+**Indicador:** Si la activación funciona, verás `(.venv)` al principio del prompt.
+
+#### 3.4 Instalar dependencias Python
+```bash
 pip install -r requirements.txt
+```
 
-# (Opcional) Ejecutar migraciones
-# alembic upgrade head
-# python -m backend.src.seed
+**¿Qué hace?** Lee `requirements.txt` y descarga FastAPI, SQLModel, bcrypt, etc.
 
-# Iniciar servidor
+#### 3.5 (Opcional) Ejecutar migraciones de BD
+```bash
+# Crear tablas según modelos
+alembic upgrade head
+
+# Poblar datos iniciales (roles, usuarios, estados)
+python -m backend.src.seed
+```
+
+#### 3.6 Iniciar servidor backend
+```bash
 uvicorn backend.src.main:app --reload
 ```
 
-**Endpoint:** `http://localhost:8000`  
-**Swagger Docs:** `http://localhost:8000/docs`
+**¿Qué ves?**
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000
+INFO:     Application startup complete
+```
 
-### 3. Frontend
+**Endpoints:**
+- 🔵 **API**: http://localhost:8000
+- 📚 **Documentación interactiva (Swagger)**: http://localhost:8000/docs
+- ⚙️ **ReDoc**: http://localhost:8000/redoc
 
+---
+
+### PASO 4: Frontend (React + Vite)
+
+#### 4.1 Abrir OTRA terminal (backend sigue corriendo)
 ```bash
+# En una nueva terminal
 cd frontend
+```
 
-# Instalar dependencias
-npm install
-
-# Copiar template de variables de entorno
+#### 4.2 Crear archivo `.env`
+```bash
+# Linux / Mac
 cp .env.example .env
 
-# Iniciar servidor de desarrollo
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+**Contenido mínimo de `.env`:**
+```env
+VITE_API_BASE_URL=http://localhost:8000
+VITE_LOG_LEVEL=debug
+VITE_ENVIRONMENT=development
+```
+
+#### 4.3 Instalar dependencias Node.js
+```bash
+npm install
+```
+
+**¿Qué hace?** Lee `package.json` y descarga React, Vite, TypeScript, etc. en `node_modules/`.
+
+#### 4.4 Iniciar servidor frontend
+```bash
 npm run dev
 ```
 
-**App:** `http://localhost:5173`
+**¿Qué ves?**
+```
+  VITE v5.0.0  ready in 150 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  press h to show help
+```
+
+**Abre en navegador:** http://localhost:5173
+
+---
+
+### ✅ VERIFICACIÓN FINAL
+
+Si llegaste acá sin errores, tenés:
+
+| Componente | URL | Estado |
+|-----------|-----|--------|
+| Backend (FastAPI) | http://localhost:8000 | ✅ Corriendo |
+| Swagger Docs | http://localhost:8000/docs | ✅ Accesible |
+| Frontend (React) | http://localhost:5173 | ✅ Corriendo |
+| PostgreSQL | localhost:5432 | ✅ Conectado |
+
+**Todo está listo. Felicidades.** 🎉
+
+---
+
+### 🔧 Terminal Layout Recomendado
+
+**Terminal 1 (Backend):**
+```bash
+cd backend
+source .venv/bin/activate  # (o .venv\Scripts\activate en Windows)
+uvicorn backend.src.main:app --reload
+```
+
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm run dev
+```
+
+**Terminal 3 (Git / comandos):**
+```bash
+# Aquí haces git commits, cambios, etc.
+cd food-store
+git status
+```
+
+---
+
+### ❌ Troubleshooting
+
+#### Backend no arranca
+
+**Error:** `ModuleNotFoundError: No module named 'fastapi'`
+```bash
+# Solución: Verifica que virtual environment esté ACTIVADO
+# Deberías ver (.venv) al inicio del prompt
+pip install -r requirements.txt
+```
+
+**Error:** `FATAL: role "foodstore_user" does not exist`
+```bash
+# Solución: PostgreSQL no está corriendo o credenciales mal
+# Verifica DATABASE_URL en .env
+# Si usas Docker, asegúrate que el container esté corriendo:
+docker ps | grep postgres
+```
+
+**Error:** `address already in use (:8000)`
+```bash
+# Puerto 8000 ocupado. Alternativa:
+uvicorn backend.src.main:app --reload --port 8001
+```
+
+#### Frontend no arranca
+
+**Error:** `npm: command not found`
+```bash
+# Node.js no instalado o PATH incorrecto
+node --version
+npm --version
+# Si retorna versión, cierra y abre terminal nuevamente
+```
+
+**Error:** `ENOENT: no such file or directory, open '.env'`
+```bash
+# Solución: .env no existe. Cópialo:
+cp .env.example .env
+```
+
+**Error:** `Cannot GET http://localhost:5173`
+```bash
+# Frontend está compilando. Espera 10 segundos y recarga (F5)
+```
+
+#### PostgreSQL
+
+**Error:** `psql: error: could not translate host name "localhost" to address`
+```bash
+# PostgreSQL no está corriendo. Inicia:
+# En macOS: brew services start postgresql
+# En Windows: búsca "pgAdmin" o "PostgreSQL" en Services
+# O usa Docker: docker run -p 5432:5432 ... (ver PASO 2)
+```
+
+---
+
+### 📞 Comandos Útiles
+
+```bash
+# Backend: instalar nueva librería
+pip install nombre-paquete
+pip freeze > requirements.txt  # Actualizar requirements.txt
+
+# Frontend: instalar nuevo paquete
+npm install nombre-paquete
+npm run lint                    # Revisar código
+npm run type-check             # TypeScript
+
+# Git
+git status                      # Ver cambios
+git log --oneline              # Ver commits
+git branch                      # Ver ramas
+```
 
 ---
 
