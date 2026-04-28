@@ -2,9 +2,9 @@
 
 ## Resumen Ejecutivo
 
-Food Store se desarrolla a través de **16 changes incrementales**, organizados en bloques lógicos:
+Food Store se desarrolla a través de **17 changes incrementales**, organizados en bloques lógicos:
 
-- **SPRINT 0** (6 changes): Infraestructura, setup y patrones base
+- **SPRINT 0** (7 changes): Infraestructura, setup, patrones base y dockerización
 - **SPRINT 1** (3 changes): Autenticación, autorización y seguridad
 - **SPRINT 2** (4 changes): Catálogo de productos, ingredientes, categorías
 - **SPRINT 3** (2 changes): Carrito, pedidos y máquina de estados
@@ -144,6 +144,35 @@ Cada change es una unidad atómica: proposal.md (qué), design.md (cómo), tasks
 **Relación con otras historias de usuario:**
 - Establece el template para todos los cambios posteriores
 - Asegura consistencia arquitectónica
+
+---
+
+### Change 06: `docker-and-local-dev`
+
+**¿Qué cubre?**
+- Dockerfile para backend (FastAPI + Python 3.11)
+- Dockerfile para frontend (Node.js 18 + Vite + Nginx)
+- docker-compose.yml orquestando: backend, frontend, postgres
+- Variables de entorno para Docker (.env.docker)
+- Script de entrypoint para migraciones automáticas
+- Volúmenes para desarrollo con hot-reload (backend y frontend)
+- Health checks para servicios
+- Nginx reverse proxy configurado (frontend en puerto 80, backend en 8000)
+- Documentación: Setup con Docker vs setup manual
+- Makefile con comandos: `make docker-up`, `make docker-down`, `make docker-logs`
+
+**Historias de usuario implementadas:**
+- (Infraestructura, no user stories nuevas)
+
+**¿De qué depende?**
+- Change 01 (backend core existente)
+- Change 02 (frontend core existente)
+- Change 05 (patrones establecidos)
+
+**Relación con otras historias de usuario:**
+- Facilita onboarding: un comando para tener todo corriendo
+- Asegura que "funciona igual en dev, test, producción"
+- Base para CI/CD futuro (GitHub Actions con Docker)
 
 ---
 
@@ -635,8 +664,10 @@ SPRINT 0
 │  └─ Change 01
 ├─ Change 04: error-handling-and-validation
 │  └─ Change 01
-└─ Change 05: feature-base-patterns
-   └─ Change 01 + Change 04
+├─ Change 05: feature-base-patterns
+│  └─ Change 01 + Change 04
+└─ Change 06: docker-and-local-dev
+   └─ Change 01 + Change 02 + Change 05
 
 SPRINT 1
 ├─ Change 10: auth-system
@@ -679,10 +710,11 @@ SPRINT 5
 
 ### Orden Obligatorio por Sprint
 
-1. **SPRINT 0**: Ejecutar en orden: 00 → 01 → 02 → 03 → 04 → 05
+1. **SPRINT 0**: Ejecutar en orden: 00 → 01 → 02 → 03 → 04 → 05 → 06
    - Todos los cambios posteriores dependen del scaffolding
    - Sin BD seeded, nada funciona
    - Sin patrones base, hay duplicación
+   - Docker facilita desarrollo local para todo lo que viene después
 
 2. **SPRINT 1**: Ejecutar en orden: 10 → 11 → 12
    - Auth debe existir antes de autorización
@@ -746,6 +778,7 @@ Para CADA change:
 | 03 | US-000b (continuación) |
 | 04 | US-068, US-074 |
 | 05 | (patrón) |
+| 06 | (infraestructura Docker) |
 | 10 | US-001, US-002, US-003, US-004, US-073 |
 | 11 | US-005, US-006 |
 | 12 | US-024, US-025, US-026, US-027 |
@@ -763,15 +796,15 @@ Para CADA change:
 
 ## Notas Finales
 
-- **Total: 16 changes** que cubren las 74 historias de usuario
+- **Total: 17 changes** que cubren las 74 historias de usuario
 - **Duración estimada**: 
-  - SPRINT 0: ~2-3 días (infraestructura)
+  - SPRINT 0: ~3-4 días (infraestructura + Docker)
   - SPRINT 1: ~2 días (auth + RBAC)
   - SPRINT 2: ~2 días (catálogo)
   - SPRINT 3: ~3 días (carrito + pedidos + FSM)
   - SPRINT 4: ~1-2 días (pagos)
   - SPRINT 5: ~2-3 días (UI completa)
-  - **Total: ~12-14 días de desarrollo**
+  - **Total: ~13-15 días de desarrollo**
   
 - **Testing**: Cada change debe ser verificado con tests
 - **Documentación**: Las specs archivadas son la documentación viva del sistema
